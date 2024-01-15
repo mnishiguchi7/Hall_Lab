@@ -1,0 +1,30 @@
+# Identify “ATG” start sites & 500bps upstream
+
+import sys,subprocess
+def revC(s):
+    return ''.join([{'A':'T','T':'A','C':'G','G':'C'}[c] for c in s])[::-1]
+for line in open(sys.argv[1]):
+    if line[0] != '#':
+        line = line.split()
+        if line[2] == 'mRNA':
+            forward = True
+            if line[6] == '-':
+                forward = False
+            if forward:
+                start = int(line[3])
+                print '>' + line[0] + ":" + str(start-500) + "," + str(start-1) + " (Forward Strand)"
+                lines = subprocess.check_output(['curl','-s','http://genome.ucsc.edu/cgi-bin/das/ce10/dna?segment=' + line[0] + ':' + str(start-500) + ',' + str(start-1)]).splitlines()
+                out = ''
+                for line in lines:
+                    if line[0] != '<':
+                        out += line
+                print out.upper()
+            else:
+                end = int(line[4])
+                print '>' + line[0] + ':' + str(end+500) + "," + str(end+1) + " (Reverse Strand)"
+                lines = subprocess.check_output(['curl','-s','http://genome.ucsc.edu/cgi-bin/das/ce10/dna?segment=' + line[0] + ':' + str(end+1) + ',' + str(end+500)]).splitlines()
+                out = ''
+                for line in lines:
+                    if line[0] != '<':
+                        out += line
+                print revC(out.upper())
